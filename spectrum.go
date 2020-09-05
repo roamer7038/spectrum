@@ -37,6 +37,7 @@ func NewSpectrum(length uint) (*Spectrum, error) {
 	}, err
 }
 
+// Copy は，Spectrumを複製します．
 func (s *Spectrum) Copy() *Spectrum {
 	ns, _ := NewSpectrum(uint(s.length))
 	ns.Set(s.bitVector)
@@ -66,11 +67,13 @@ func (s *Spectrum) AdjustOnesCount(n uint) *Spectrum {
 		for oc != n {
 			// ビットフラグを増やす
 			s.bitVector.SetBit(s.bitVector, s.rnd.Intn(s.length), 1)
+			oc = s.OnesCount()
 		}
 	} else {
 		for oc != n {
 			// ビットフラグを減らす
 			s.bitVector.SetBit(s.bitVector, s.rnd.Intn(s.length), 0)
+			oc = s.OnesCount()
 		}
 	}
 
@@ -98,7 +101,7 @@ func (s *Spectrum) SetUint64(x uint64) (*Spectrum, error) {
 		return nil, errors.New("Error: bitVector is too big for length of Spectrum.")
 	}
 
-	s.SetUint64(x)
+	s.bitVector.SetUint64(x)
 	return s, nil
 }
 
@@ -112,13 +115,14 @@ func (s *Spectrum) SetString(str string, base int) (*Spectrum, error) {
 	return s.Set(v)
 }
 
-// Uint64 は，bitVectorを10進数のuint64型で返します．uint64で表せない場合はエラーを返します．
-func (s *Spectrum) Uint64() (uint64, error) {
-	if !s.bitVector.IsUint64() {
-		return 0, errors.New("Error: Failed to convert uint64.")
-	}
+// IsUint64 は，bitVectorがuint64型で表現できるかを返します．
+func (s *Spectrum) IsUint64() bool {
+	return s.bitVector.IsUint64()
+}
 
-	return s.bitVector.Uint64(), nil
+// Uint64 は，bitVectorを10進数のuint64型で返します．uint64で表せない場合は未定義です．
+func (s *Spectrum) Uint64() uint64 {
+	return s.bitVector.Uint64()
 }
 
 // BigInt は，bitVectorを10進数のbig.Int型で返します．
@@ -138,11 +142,16 @@ func (s *Spectrum) Text(base int) string {
 
 // Hex は，bitVectorを16進数表記の文字列で返します．プレフィックスに"0x"が追加されます．
 func (s *Spectrum) Hex() string {
-	return "0x" + fmt.Sprintf("%0*s", s.length, s.bitVector.Text(16))
+	l := s.length / 4
+	if 0 < s.length%4 {
+		l++
+	}
+
+	return "0x" + fmt.Sprintf("%0*s", l, s.bitVector.Text(16))
 }
 
-// Uint64n は，指定した1ビット数を持つbitVectorをuint64で返します．フラグ位置はランダムです．uint64で表せない場合はエラーを返します．
-func (s *Spectrum) Uint64n(n uint) (uint64, error) {
+// Uint64n は，指定した1ビット数を持つbitVectorをuint64で返します．フラグ位置はランダムです．uint64で表せない場合は未定義です．
+func (s *Spectrum) Uint64n(n uint) uint64 {
 	return s.Copy().AdjustOnesCount(n).Uint64()
 }
 
