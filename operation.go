@@ -30,7 +30,7 @@ func Xor(source *Spectrum, target *Spectrum) *big.Int {
 func Rsh(s *Spectrum, n uint) *Spectrum {
 	b := s.BigInt()
 	for i := 0; i < int(n); i++ {
-		if big.NewInt(0).And(b, big.NewInt(1)) == big.NewInt(1) {
+		if big.NewInt(0).And(b, big.NewInt(1)).Cmp(big.NewInt(1)) == 0 {
 			b.SetBit(b, s.Len(), 1)
 		}
 		b.Rsh(b, 1)

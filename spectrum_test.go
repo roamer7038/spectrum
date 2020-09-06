@@ -5,10 +5,15 @@ import (
 	"testing"
 )
 
+const len8 = 8
 const len32 = 32
 const len64 = 64
+const len128 = 128
+
+const bits8 = 0xFF
 const bits32 = 0xFFFFFFFF
 const bits64 uint64 = 0xFFFFFFFFFFFFFFFF
+const bits128 = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
 
 const str32bit = "0b0000000000000000000000000000000011111111111111111111111111111111"
 const str32dec = "4294967295"
@@ -24,11 +29,22 @@ func TestLen(t *testing.T) {
 	}
 }
 
-// --- 入力系 ---
+func TestCopy(t *testing.T) {
+	spctr, _ := NewSpectrum(len64)
+
+	t.Logf("Exec: Copy()")
+	_spctr := spctr.Copy()
+	_spctr.bitVector = big.NewInt(1)
+	if spctr.bitVector == _spctr.bitVector {
+		t.Errorf("Expected call by value, but got call by reference.")
+	}
+}
+
+// --- Input ---
 func TestSet(t *testing.T) {
 	spctr, _ := NewSpectrum(len32)
 
-	// -- 正常系 --
+	// -- normal usecase --
 	t.Logf("Exec: Set()")
 	if _, err := spctr.Set(big.NewInt(bits32)); err != nil {
 		t.Fatal(err)
@@ -46,7 +62,7 @@ func TestSet(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// -- 異常系 --
+	// -- exception usecase --
 	t.Logf("Error handling: Set()")
 	if _, err := spctr.Set(big.NewInt(0).SetUint64(bits64)); err == nil {
 		t.Error("Error handling may not be appropriate.")
@@ -63,7 +79,7 @@ func TestSet(t *testing.T) {
 	}
 }
 
-// --- 出力系 ---
+// --- Output ---
 func TestGet(t *testing.T) {
 	spctr, _ := NewSpectrum(len64)
 
@@ -104,6 +120,8 @@ func TestGet(t *testing.T) {
 	}
 }
 
+// --- bits ---
+
 func testOnesCount(t *testing.T, spctr *Spectrum, want uint) {
 	if got := spctr.OnesCount(); got != want {
 		t.Errorf("Case(0x%x) expected %d, got %d", spctr.bitVector, want, got)
@@ -132,6 +150,8 @@ func TestAdjustOnesCount(t *testing.T) {
 	testOnesCount(t, spctr, 4)
 }
 
+// --- rand ---
+
 func TestSeed(t *testing.T) {
 	var cp []int
 	spctr, _ := NewSpectrum(len64)
@@ -150,13 +170,104 @@ func TestSeed(t *testing.T) {
 	}
 }
 
-func TestCopy(t *testing.T) {
-	spctr, _ := NewSpectrum(len64)
+// --- bitwise operation ---
 
-	t.Logf("Exec: Copy()")
-	_spctr := spctr.Copy()
-	_spctr.bitVector = big.NewInt(1)
-	if spctr.bitVector == _spctr.bitVector {
-		t.Errorf("Expected call by value, but got call by reference.")
+func TestAnd(t *testing.T) {
+	spctr32, _ := NewSpectrum(len64)
+	spctr64, _ := NewSpectrum(len64)
+
+	spctr32.SetUint64(bits32)
+	spctr64.SetUint64(bits64)
+
+	t.Logf("Exec: And()")
+	if got := And(spctr64, spctr32); got.Cmp(big.NewInt(bits32)) != 0 {
+		t.Errorf("Expected %x, got %x", bits32, got)
+	}
+}
+
+func TestOr(t *testing.T) {
+	spctr32, _ := NewSpectrum(len64)
+	spctr64, _ := NewSpectrum(len64)
+
+	spctr32.SetUint64(bits32)
+	spctr64.SetUint64(bits64)
+
+	t.Logf("Exec: Or()")
+	if got := Or(spctr64, spctr32); got.Cmp(big.NewInt(0).SetUint64(bits64)) != 0 {
+		t.Errorf("Expected %x, got %x", bits64, got)
+	}
+}
+
+func TestAndNot(t *testing.T) {
+	spctr32, _ := NewSpectrum(len64)
+	spctr64, _ := NewSpectrum(len64)
+
+	spctr32.SetUint64(bits32)
+	spctr64.SetUint64(bits64 - 1)
+
+	t.Logf("Exec: AndNot()")
+	want, _ := big.NewInt(0).SetString("00000001", 16)
+	if got := AndNot(spctr32, spctr64); got.Cmp(want) != 0 {
+		t.Errorf("Expected %x, got %x", want, got)
+	}
+
+	want, _ = big.NewInt(0).SetString("ffffffff00000000", 16)
+	if got := AndNot(spctr64, spctr32); got.Cmp(want) != 0 {
+		t.Errorf("Expected %x, got %x", want, got)
+	}
+
+}
+
+func TestXor(t *testing.T) {
+	spctr32, _ := NewSpectrum(len64)
+	spctr64, _ := NewSpectrum(len64)
+
+	spctr32.SetUint64(bits32)
+	spctr64.SetUint64(bits64)
+
+	t.Logf("Exec: Xor()")
+	want, _ := big.NewInt(0).SetString("ffffffff00000000", 16)
+	if got := Xor(spctr64, spctr32); got.Cmp(want) != 0 {
+		t.Errorf("Expected %x, got %x", want, got)
+	}
+}
+
+// --- shift operation ---
+
+func TestRsh(t *testing.T) {
+	spctr, _ := NewSpectrum(len8)
+
+	pattern := []string{
+		"11111111",
+		"10101010",
+		"01010101",
+		"00000000",
+	}
+
+	t.Logf("Exex: Rsh()")
+	for _, s := range pattern {
+		spctr.SetString(s, 2)
+		if got := Rsh(spctr, 2); got.Bit() != "0b"+s {
+			t.Errorf("Expected 0b%v, got %v", s, got.Bit())
+		}
+	}
+}
+
+func TestLsh(t *testing.T) {
+	spctr, _ := NewSpectrum(len8)
+
+	pattern := []string{
+		"11111111",
+		"10101010",
+		"01010101",
+		"00000000",
+	}
+
+	t.Logf("Exec: Lsh()")
+	for _, s := range pattern {
+		spctr.SetString(s, 2)
+		if got := Lsh(spctr, 2); got.Bit() != "0b"+s {
+			t.Errorf("Expected 0x%v, got %v", s, got.Bit())
+		}
 	}
 }
