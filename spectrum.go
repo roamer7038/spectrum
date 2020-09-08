@@ -14,7 +14,7 @@ import (
 // --- Spectrum ---
 //
 // keywords:
-// spectrum, spectrum-bit, spectrum-length, OnesCount(hamming-weight), one-hot, bit-vector
+// spectrum, spectrum-bit, spectrum-length, OnesCount(hamming-weight, population count), one-hot, bit-vector
 //
 // Spectrum は，宣言時にビット長を指定し，
 // また変数を隠蔽することでビット配列を意図しない変更から保護します．
@@ -62,19 +62,21 @@ func (s *Spectrum) OnesCount() uint {
 
 // AdjustOnesCount は，指定した1ビット数になるまでビットフラグを増減させます．
 func (s *Spectrum) AdjustOnesCount(n uint) *Spectrum {
+	var set uint = 1
+	if uint(s.length/2) < n {
+		s.bitVector.SetUint64(1)
+		s.bitVector.Lsh(s.bitVector, uint(s.length))
+		s.bitVector.Sub(s.bitVector, big.NewInt(1))
+	}
+
 	oc := s.OnesCount()
-	if oc < n {
-		for oc != n {
-			// ビットフラグを増やす
-			s.bitVector.SetBit(s.bitVector, s.rnd.Intn(s.length), 1)
-			oc = s.OnesCount()
-		}
-	} else {
-		for oc != n {
-			// ビットフラグを減らす
-			s.bitVector.SetBit(s.bitVector, s.rnd.Intn(s.length), 0)
-			oc = s.OnesCount()
-		}
+	if n < oc {
+		set = 0
+	}
+
+	for oc != n {
+		s.bitVector.SetBit(s.bitVector, s.rnd.Intn(s.length), set)
+		oc = s.OnesCount()
 	}
 
 	return s
