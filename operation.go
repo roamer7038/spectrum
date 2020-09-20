@@ -56,3 +56,20 @@ func Lsh(s *Spectrum, n uint) *Spectrum {
 	sh.Set(b)
 	return sh
 }
+
+// Merge は，2つのSpectrumを1つのSpectrumに結合します．
+// Spectrumの長さは2つのSpectrumの長さの合計値となり，xはyの長さ分左シフトします．
+// ex. 1010 + 1001 -> 10101001
+func Merge(x, y *Spectrum) (*Spectrum, error) {
+	l := uint(x.Len() + y.Len())
+	b := x.BigInt()
+	b.Lsh(b, uint(y.Len())).Or(b, y.BigInt())
+
+	s, err := NewSpectrum(l)
+	if err != nil {
+		return nil, err
+	}
+
+	s.Set(b)
+	return s, nil
+}

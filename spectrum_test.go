@@ -271,3 +271,15 @@ func TestLsh(t *testing.T) {
 		}
 	}
 }
+
+func TestMerge(t *testing.T) {
+	x, _ := NewSpectrum(len8)
+	y, _ := NewSpectrum(len8)
+
+	x.SetString("10101010", 2)
+	y.SetString("10011001", 2)
+
+	if got, _ := Merge(x, y); got.Len() != 16 || got.Text(2) != "1010101010011001" {
+		t.Errorf("Expected 0x%v, got %v", "1010101010011001", got.Bit())
+	}
+}
