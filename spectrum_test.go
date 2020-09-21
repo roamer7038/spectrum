@@ -5,32 +5,25 @@ import (
 	"testing"
 )
 
-const len8 = 8
-const len32 = 32
-const len64 = 64
-const len128 = 128
-
-const bits8 = 0xFF
-const bits32 = 0xFFFFFFFF
-const bits64 uint64 = 0xFFFFFFFFFFFFFFFF
-const bits128 = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
-
-const str32bit = "0b0000000000000000000000000000000011111111111111111111111111111111"
-const str32dec = "4294967295"
-const str32hex = "0x00000000ffffffff"
+const (
+	bits8         = 0xFF
+	bits16        = 0xFFFF
+	bits32        = 0xFFFFFFFF
+	bits64 uint64 = 0xFFFFFFFFFFFFFFFF
+)
 
 func TestLen(t *testing.T) {
-	spctr, _ := NewSpectrum(len64)
+	spctr, _ := NewSpectrum(64)
 
 	got := spctr.Len()
 	t.Logf("Len()")
-	if got != len64 {
-		t.Errorf("Length expected %d, got %d", len64, got)
+	if got != 64 {
+		t.Errorf("Length expected %d, got %d", 64, got)
 	}
 }
 
 func TestCopy(t *testing.T) {
-	spctr, _ := NewSpectrum(len64)
+	spctr, _ := NewSpectrum(64)
 
 	t.Logf("Exec: Copy()")
 	_spctr := spctr.Copy()
@@ -42,7 +35,7 @@ func TestCopy(t *testing.T) {
 
 // --- Input ---
 func TestSet(t *testing.T) {
-	spctr, _ := NewSpectrum(len32)
+	spctr, _ := NewSpectrum(32)
 
 	// -- normal usecase --
 	t.Logf("Exec: Set()")
@@ -81,7 +74,8 @@ func TestSet(t *testing.T) {
 
 // --- Output ---
 func TestGet(t *testing.T) {
-	spctr, _ := NewSpectrum(len64)
+	var want string
+	spctr, _ := NewSpectrum(64)
 
 	t.Logf("Exec: Uint64()")
 	spctr.SetUint64(bits64)
@@ -99,18 +93,23 @@ func TestGet(t *testing.T) {
 	}
 
 	t.Logf("Exec: Bit()")
-	if got := spctr.Bit(); got != str32bit {
-		t.Errorf("Bit() expected %s, got %s", str32bit, got)
+
+	want = "0b0000000000000000000000000000000011111111111111111111111111111111"
+	if got := spctr.Bit(); got != want {
+		t.Errorf("Bit() expected %s, got %s", want, got)
 	}
 
-	t.Logf("Exec: Text()")
-	if got := spctr.Text(10); got != str32dec {
-		t.Errorf("Text() expected %s, got %s", str32dec, got)
+	t.Logf("Exec: String()")
+	want = "4294967295"
+	if got := spctr.String(10); got != want {
+		t.Errorf("String() expected %s, got %s", want, got)
 	}
 
 	t.Logf("Exec: Hex()")
-	if got := spctr.Hex(); got != str32hex {
-		t.Errorf("Hex() expected %s, got %s", str32hex, got)
+
+	want = "0x00000000ffffffff"
+	if got := spctr.Hex(); got != want {
+		t.Errorf("Hex() expected %s, got %s", want, got)
 	} else {
 		spctr7, _ := NewSpectrum(7)
 		spctr7.SetUint64(127)
@@ -129,7 +128,7 @@ func testOnesCount(t *testing.T, spctr *Spectrum, want uint) {
 }
 
 func TestOnesCount(t *testing.T) {
-	spctr, _ := NewSpectrum(len64)
+	spctr, _ := NewSpectrum(64)
 
 	t.Logf("Exec: OnesCount()")
 	spctr.SetUint64(bits64)
@@ -140,7 +139,7 @@ func TestOnesCount(t *testing.T) {
 }
 
 func TestAdjustOnesCount(t *testing.T) {
-	spctr, _ := NewSpectrum(len64)
+	spctr, _ := NewSpectrum(64)
 
 	t.Logf("Exec: AdjustOnesCount()")
 	spctr.AdjustOnesCount(8)
@@ -154,7 +153,7 @@ func TestAdjustOnesCount(t *testing.T) {
 
 func TestSeed(t *testing.T) {
 	var cp []int
-	spctr, _ := NewSpectrum(len64)
+	spctr, _ := NewSpectrum(64)
 
 	t.Logf("Exec: Seed()")
 	spctr.Seed(1)
@@ -173,8 +172,8 @@ func TestSeed(t *testing.T) {
 // --- bitwise operation ---
 
 func TestAnd(t *testing.T) {
-	spctr32, _ := NewSpectrum(len64)
-	spctr64, _ := NewSpectrum(len64)
+	spctr32, _ := NewSpectrum(64)
+	spctr64, _ := NewSpectrum(64)
 
 	spctr32.SetUint64(bits32)
 	spctr64.SetUint64(bits64)
@@ -186,8 +185,8 @@ func TestAnd(t *testing.T) {
 }
 
 func TestOr(t *testing.T) {
-	spctr32, _ := NewSpectrum(len64)
-	spctr64, _ := NewSpectrum(len64)
+	spctr32, _ := NewSpectrum(64)
+	spctr64, _ := NewSpectrum(64)
 
 	spctr32.SetUint64(bits32)
 	spctr64.SetUint64(bits64)
@@ -199,8 +198,8 @@ func TestOr(t *testing.T) {
 }
 
 func TestAndNot(t *testing.T) {
-	spctr32, _ := NewSpectrum(len64)
-	spctr64, _ := NewSpectrum(len64)
+	spctr32, _ := NewSpectrum(64)
+	spctr64, _ := NewSpectrum(64)
 
 	spctr32.SetUint64(bits32)
 	spctr64.SetUint64(bits64 - 1)
@@ -219,8 +218,8 @@ func TestAndNot(t *testing.T) {
 }
 
 func TestXor(t *testing.T) {
-	spctr32, _ := NewSpectrum(len64)
-	spctr64, _ := NewSpectrum(len64)
+	spctr32, _ := NewSpectrum(64)
+	spctr64, _ := NewSpectrum(64)
 
 	spctr32.SetUint64(bits32)
 	spctr64.SetUint64(bits64)
@@ -235,7 +234,7 @@ func TestXor(t *testing.T) {
 // --- shift operation ---
 
 func TestRsh(t *testing.T) {
-	spctr, _ := NewSpectrum(len8)
+	spctr, _ := NewSpectrum(8)
 
 	pattern := []string{
 		"11111111",
@@ -254,7 +253,7 @@ func TestRsh(t *testing.T) {
 }
 
 func TestLsh(t *testing.T) {
-	spctr, _ := NewSpectrum(len8)
+	spctr, _ := NewSpectrum(8)
 
 	pattern := []string{
 		"11111111",
@@ -273,13 +272,13 @@ func TestLsh(t *testing.T) {
 }
 
 func TestMerge(t *testing.T) {
-	x, _ := NewSpectrum(len8)
-	y, _ := NewSpectrum(len8)
+	x, _ := NewSpectrum(8)
+	y, _ := NewSpectrum(8)
 
 	x.SetString("10101010", 2)
 	y.SetString("10011001", 2)
 
-	if got, _ := Merge(x, y); got.Len() != 16 || got.Text(2) != "1010101010011001" {
+	if got, _ := Merge(x, y); got.Len() != 16 || got.String(2) != "1010101010011001" {
 		t.Errorf("Expected 0x%v, got %v", "1010101010011001", got.Bit())
 	}
 }
