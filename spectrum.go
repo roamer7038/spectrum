@@ -137,15 +137,9 @@ func (s *Spectrum) Bit() string {
 	return "0b" + fmt.Sprintf("%0*s", s.length, s.bitVector.Text(2))
 }
 
-// Text は，bitVectorを指定した進数での文字列を返します．プレフィックスは追加されません．
-func (s *Spectrum) Text(base int) string {
-	return s.bitVector.Text(base)
-}
-
 // String は，bitVectorを指定した進数での文字列を返します．プレフィックスは追加されません．
-// 実体は Text() のエイリアスです．
 func (s *Spectrum) String(base int) string {
-	return s.Text(base)
+	return s.bitVector.Text(base)
 }
 
 // Hex は，bitVectorを16進数表記の文字列で返します．プレフィックスに"0x"が追加されます．
